@@ -1,0 +1,57 @@
+<GuiXml>
+
+<Controls>
+<TopLevelControl name="TiEmote" mouseEnabled="true" movable="true">
+
+<Dimensions x="200" y="420"/>
+<Anchor point="TOPLEFT"/>
+
+	<Controls>
+	<Label name="$(parent)Label" font="ZoFontGameLargeBoldShadow" color="CFDCBD" wrapmode="ELLIPSIS" verticalAlignment="CENTER" text="emote">
+		<Anchor point="TOPLEFT" offsetX="20"/>
+	</Label>
+	</Controls>
+		<OnUpdate>
+		TiEmoteUpdate()
+		</OnUpdate>
+		
+	<Controls>
+	<Control name="TE_EmotePanel" mouseEnabled="true">
+	<Dimensions x="200" y="400"/>
+	<Anchor point="TOPLEFT"/>
+	</Control>
+	</Controls>
+	
+	<Controls>
+	<Button name="TE_ShowListButton" inherits="ZO_DefaultButton" text="list">
+	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="80" offsetY="3"/>
+	<Dimensions y="20"/>
+		<OnClicked>
+		TiEmoteToggleList()
+		</OnClicked>
+	</Button>
+	</Controls>
+	
+</TopLevelControl>
+</Controls>
+
+
+
+<Controls>
+<Button name="TE_EmoteButton" inherits="ZO_DefaultButton" virtual="true" text="Click_">
+	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="100" offsetY="30"/>
+	<MouseButton button="1" enabled="true"/>
+	<MouseButton button="2" enabled="true"/> 
+</Button>
+</Controls>
+
+
+<Controls>
+<Button name="TE_FavButton" inherits="ZO_DefaultButton" virtual="true" text="Click_">
+	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="-40" offsetY="30"/>
+	<MouseButton button="1" enabled="true"/>
+	<MouseButton button="2" enabled="true"/>
+</Button>
+</Controls>
+
+</GuiXml>

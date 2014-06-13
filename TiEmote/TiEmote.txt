@@ -1,0 +1,7 @@
+## Title: TiEmote
+## APIVersion: 100004
+## SavedVariables: TiEmote_Vars
+
+TiEmote.lua
+TiEmote.xml
+
