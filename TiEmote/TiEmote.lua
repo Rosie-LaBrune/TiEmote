@@ -7,7 +7,8 @@ TE.default		= {
 	fav			= {},
 	movable		= true,
 	opacity		= 1,
-	color			= {}
+	color			= {},
+	bversion		= "1.09"
 			}
 	
 TE.nbEmote = 0
@@ -29,7 +30,11 @@ TE.maxColor = table.getn(TE.fontColor)
 TE.sliderOffset = 0
 TE.alphaList = {}
 
-local tex = "ESOUI/art/lorelibrary/lorelibrary_scroll.dds"
+TE.texb = "/esoui/art/lorelibrary/lorelibrary_scroll.dds"
+TE.tex = "/esoui/art/miscellaneous/scrollbox_elevator.dds"
+TE.yOffset = 0 --30
+TE.yOffsetFav = 29
+TE.orderFav = false
 	
 function TE:OnAddOnLoaded( eventCode, addOnName )
 	
@@ -55,12 +60,16 @@ function TE:OnAddOnLoaded( eventCode, addOnName )
 	TE.movable = TE.vars.movable
 	TE.opacity = TE.vars.opacity
 	TE.color = TE.vars.color
+	TE.bversion = TE.vars.bversion
+	
+	-- init fav with index & color for previous version < 1.10
+	self:checkFavVersion()
 	
 	--for i = 0, TE.nbEmote-1 do
 	for i=0, TE.nbRow-1 do
 		local ButtonControl = CreateControlFromVirtual("TE_EmoteButton", TE_EmotePanel, "TE_EmoteButton", i)
 		isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = ButtonControl:GetAnchor()
-		ButtonControl:SetAnchor(point, relativeTo, relativePoint, offsetX, 30+i*DEFAULT_BUTTON_HEIGHT)
+		ButtonControl:SetAnchor(point, relativeTo, relativePoint, offsetX, TE.yOffset+i*DEFAULT_BUTTON_HEIGHT)
 		ButtonControl:SetText(TE:GetEmoteSlashName(i+1,0))
 		ButtonControl:SetHandler("OnClicked", function(self,button)
 					if button==1 then
@@ -69,7 +78,7 @@ function TE:OnAddOnLoaded( eventCode, addOnName )
 						TE:ToggleFav((i+1),0)
 					end
 				end)
-		ButtonControl:SetHandler("OnMouseWheel", function(self, delta) TE:OnMouseWheel(delta) end)
+		--ButtonControl:SetHandler("OnMouseWheel", function(self, delta) TE:OnMouseWheel(delta) end)
 		ButtonControl:SetHandler("OnMouseDoubleClick", function(self) TE:NextColor(i+TE.sliderOffset) end)
 	end
 	
@@ -77,16 +86,17 @@ function TE:OnAddOnLoaded( eventCode, addOnName )
 	TE.slider = CreateControl("TESlider",TE_EmotePanel,CT_SLIDER)
 	TE.slider:SetDimensions(30,TE.nbRow*DEFAULT_BUTTON_HEIGHT)
 	TE.slider:SetMouseEnabled(true)
-	TE.slider:SetThumbTexture(tex,tex,tex,30,50,0,0,1,1)
+	TE.slider:SetThumbTexture(TE.tex,TE.tex,TE.tex,20,50,0,0,1,1)
 	TE.slider:SetMinMax(0,TE.nbEmote-TE.nbRow)
 	TE.slider:SetValueStep(1)
-	TE.slider:SetAnchor(TOPLEFT,EmoteLabel,TOPLEFT,220,30)
+	TE.slider:SetAnchor(TOPLEFT,TE_EmotePanel,TOPLEFT,120,TE.yOffset)
 	TE.slider:SetHandler("OnValueChanged",function(self,value,eventReason)
 			TE:OnSliderMove(value) end)
 			
 	-- mousewheel interaction
 	-- sometimes the mouse lose focus on panel and it zoom/dezoom cam, so i ve put it on button
-	--TE_EmotePanel:SetHandler("OnMouseWheel", function(self, delta) TE:OnMouseWheel(delta) end)
+	-- edit 1.10 : change panel dimensions and seems ok for now
+	TE_EmotePanel:SetHandler("OnMouseWheel", function(self, delta) TE:OnMouseWheel(delta) end)
 			
 	-- update button visibility
 	self:UpdateButton()--0,TE.nbRow-1)
@@ -109,7 +119,8 @@ function TE:OnAddOnLoaded( eventCode, addOnName )
 	-- init config panel
 	self:InitConfigPanel()
 	
-	
+	--update version
+	TE.vars.bversion = "1.10"
 end
 
 function TE:OnReticleHidden(eventCode, hidden)
@@ -149,6 +160,100 @@ function  TiEmoteSaveAnchor()
 	end
 end
 
+function TiEmoteToggleOrderFav()
+	TE.orderFav = not TE.orderFav
+	TE:UpdateOrderFav()
+end
+
+function TE:UpdateOrderFav()
+	local n = table.getn(TE.fav)
+	
+	-- hide
+	for i=1,n do
+		local button_up = GetControl("TE_UpButton"..tostring(i))
+		if button_up ~= nil then
+			button_up:SetHidden(true)
+		end
+		local button_down = GetControl("TE_DownButton"..tostring(i))
+		if button_down ~= nil then
+			button_down:SetHidden(true)
+		end
+	end
+	
+	-- show
+	if n>1 and TE.orderFav then
+		-- show first
+		local button_down = GetControl("TE_DownButton1")
+		if button_down == nil then
+			button_down = CreateControlFromVirtual("TE_DownButton", TiEmote, "TE_DownButton", 1)
+			button_down:SetHandler("OnClicked", function(self) TE:FavDown(1) end)
+		else
+			button_down:ClearAnchors()
+			button_down:SetHidden(false)
+		end
+		local isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = button_down:GetAnchor()
+		button_down:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -70, TE.yOffsetFav)
+		
+		-- show last
+		local button_up = GetControl("TE_UpButton"..tostring(n))
+		if button_up == nil then
+			button_up = CreateControlFromVirtual("TE_UpButton", TiEmote, "TE_UpButton", n)
+			button_up:SetHandler("OnClicked", function(self) TE:FavUp(n) end)
+		else
+			button_up:ClearAnchors()
+			button_up:SetHidden(false)
+		end
+		isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = button_up:GetAnchor()
+		button_up:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -90, TE.yOffsetFav+(n-1)*DEFAULT_BUTTON_HEIGHT)
+		
+		-- show both for those between
+		for i=2,n-1 do
+			button_down = GetControl("TE_DownButton"..tostring(i))	
+			if button_down == nil then
+				button_down = CreateControlFromVirtual("TE_DownButton", TiEmote, "TE_DownButton", i)
+				button_down:SetHandler("OnClicked", function(self) TE:FavDown(i) end)
+			else
+				button_down:ClearAnchors()
+				button_down:SetHidden(false)
+			end
+			isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = button_down:GetAnchor()
+			button_down:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -70, TE.yOffsetFav+(i-1)*DEFAULT_BUTTON_HEIGHT)
+		
+			button_up = GetControl("TE_UpButton"..tostring(i))
+			if button_up == nil then
+				button_up = CreateControlFromVirtual("TE_UpButton", TiEmote, "TE_UpButton", i)
+				button_up:SetHandler("OnClicked", function(self) TE:FavUp(i) end)
+			else
+				button_up:ClearAnchors()
+				button_up:SetHidden(false)
+			end
+			isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = button_up:GetAnchor()
+			button_up:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -90, TE.yOffsetFav+(i-1)*DEFAULT_BUTTON_HEIGHT)
+		end
+		
+	end
+end
+
+function TE:FavUp(idfav)
+	local old = TE.fav[idfav][1]
+	TE.fav[idfav][1] = old - 1
+	TE.fav[idfav-1][1] = old
+	table.sort(TE.fav, function(a,b) return a[1] < b[1] end)
+	TE.vars.fav = TE.fav
+	
+	self:UpdateFav()
+end
+
+function TE:FavDown(idfav)
+	local old = TE.fav[idfav][1]
+	TE.fav[idfav][1] = old + 1
+	TE.fav[idfav+1][1] = old
+	table.sort(TE.fav, function(a,b) return a[1] < b[1] end)
+	TE.vars.fav = TE.fav
+	
+	self:UpdateFav()
+end
+
 function TE:InitAlphaList()
 	local alpha = {}
 	for i=1, GetNumEmotes() do
@@ -183,6 +288,7 @@ function TE:OnMouseWheel(delta)
 	TE.sliderOffset = offset
 
 	TESlider:SetValue(offset)
+	
 end
 
 function TE:UpdateButton()--(min,max)
@@ -211,7 +317,7 @@ function TE:UpdateButton()--(min,max)
 						TE:ToggleFav(i,0)
 					end
 				end)
-		button:SetHandler("OnMouseWheel", function(self, delta) TE:OnMouseWheel(delta) end)
+		--button:SetHandler("OnMouseWheel", function(self, delta) TE:OnMouseWheel(delta) end)
 		button:SetHandler("OnMouseDoubleClick", function(self) TE:NextColor(i -1) end)
 	end
 	
@@ -257,8 +363,9 @@ function TE:ToggleFav(fav, list)
 		emIndex = fav
 	end
 	
-	for i=1,table.getn(TE.fav) do
-		if (TE.fav[i] == emIndex) then
+	local n = table.getn(TE.fav)
+	for i=1, n do
+		if (TE.fav[i][2] == emIndex) then
 			bFav = true
 			idFav = i
 			break
@@ -268,14 +375,20 @@ function TE:ToggleFav(fav, list)
 	if bFav then
 		--d("already fav -> remove")
 		table.remove(TE.fav,idFav)
+		self:UpdateFavIndex()
 		self:RemoveFavButton()
 	else
 		--d("not in fav -> add")
-		table.insert(TE.fav,emIndex)
+		table.insert(TE.fav,{n+1,emIndex,0})
+		table.sort(TE.fav, function(a,b) return a[1] < b[1] end)
 		self:AddFavButton(emIndex)
 	end
 	
 	TE.vars.fav = TE.fav
+	
+	if TE.orderFav then
+		self:UpdateOrderFav()
+	end
 end
 
 function TiEmoteToggleList()
@@ -291,22 +404,69 @@ function TE:ShowList()
 	end
 end
 
+function TE:checkFavVersion()
+	if TE.bversion == "1.09" then
+		local tmp_array = {}
+		local n = table.getn(TE.fav)
+		for i=1,n do
+			table.insert(tmp_array,{i,TE.fav[i],0})
+		end
+		table.sort(tmp_array, function(a,b) return a[1] < b[1] end)
+		TE.fav = tmp_array
+		TE.vars.fav = TE.fav
+	end
+end
+
+function TE:UpdateFavIndex()
+	for i=1, table.getn(TE.fav) do
+		TE.fav[i][1] = i
+	end
+end
+
 function TE:InitFav()
 	local n = table.getn(TE.fav)
 	
 	for i=1, n do
 		local buttonControl = CreateControlFromVirtual("TE_FavButton", TiEmote, "TE_FavButton", i)
-		isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = buttonControl:GetAnchor()
+		local isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = buttonControl:GetAnchor()
 		buttonControl:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -40, 30+(i-1)*DEFAULT_BUTTON_HEIGHT)
-		--buttonControl:SetAnchor(point, relativeTo, relativePoint, offsetX, 30+(i-1)*DEFAULT_BUTTON_HEIGHT)
-		buttonControl:SetText(TE:GetEmoteSlashName(TE.fav[i],1))
+		buttonControl:SetText(TE:GetEmoteSlashName(TE.fav[i][2],1))
 		buttonControl:SetHandler("OnClicked", function(self,button)
 			if (button==1) then
-				TE:PlayEmote(TE.fav[i],1) 
+				TE:PlayEmote(TE.fav[i][2],1) 
 			else	
-				TE:ToggleFav(TE.fav[i],1)
+				TE:ToggleFav(TE.fav[i][2],1)
 			end
 		end)
+		buttonControl:SetHandler("OnMouseDoubleClick", function(self) TE:NextFavColor(TE.fav[i][1]) end)
+		
+		color = self:GetColor(TE.fav[i][3])
+		buttonControl:SetNormalFontColor(color[1], color[2], color[3], color[4])
+		buttonControl:SetMouseOverFontColor(color[1], color[2], color[3], color[4])
+		buttonControl:SetPressedFontColor(color[1], color[2], color[3], color[4])
+	end
+end
+
+function TE:UpdateFav()
+	local n = table.getn(TE.fav)
+	table.sort(TE.fav, function(a,b) return a[1] < b[1] end)
+	
+	for i=1, n do
+		local buttonControl = GetControl("TE_FavButton"..tostring(i))
+		buttonControl:SetText(TE:GetEmoteSlashName(TE.fav[i][2],1))
+		buttonControl:SetHandler("OnClicked", function(self,button)
+			if (button==1) then
+				TE:PlayEmote(TE.fav[i][2],1) 
+			else	
+				TE:ToggleFav(TE.fav[i][2],1)
+			end
+		end)
+		buttonControl:SetHandler("OnMouseDoubleClick", function(self) TE:NextFavColor(TE.fav[i][1]) end)
+		
+		color = self:GetColor(TE.fav[i][3])
+		buttonControl:SetNormalFontColor(color[1], color[2], color[3], color[4])
+		buttonControl:SetMouseOverFontColor(color[1], color[2], color[3], color[4])
+		buttonControl:SetPressedFontColor(color[1], color[2], color[3], color[4])
 	end
 end
 
@@ -323,7 +483,7 @@ function TE:AddFavButton(fav)
 		buttonControl:SetHidden(false)
 	end
 	
-	isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = buttonControl:GetAnchor()
+	local isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = buttonControl:GetAnchor()
 	buttonControl:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -40, 30+(n-1)*DEFAULT_BUTTON_HEIGHT)
 	--buttonControl:SetAnchor(point, relativeTo, relativePoint, offsetX, 30+(n-1)*DEFAULT_BUTTON_HEIGHT)
 	buttonControl:SetText(TE:GetEmoteSlashName(fav,1))
@@ -334,7 +494,7 @@ function TE:AddFavButton(fav)
 			TE:ToggleFav(fav,1)
 		end
 	end)
-
+	buttonControl:SetHandler("OnMouseDoubleClick", function(self) TE:NextFavColor(TE.fav[n][1]) end)
 end
 
 function TE:RemoveFavButton()
@@ -342,28 +502,43 @@ function TE:RemoveFavButton()
 	local n = table.getn(TE.fav)
 
 	local lastButton = GetControl("TE_FavButton"..tostring(n+1))
+	color = self:GetColor(0)
+	lastButton:SetNormalFontColor(color[1], color[2], color[3], color[4])
+	lastButton:SetMouseOverFontColor(color[1], color[2], color[3], color[4])
+	lastButton:SetPressedFontColor(color[1], color[2], color[3], color[4])
 	lastButton:SetHidden(true)
+	
+	local button_up = GetControl("TE_UpButton"..tostring(n+1))
+	if button_up ~= nil then
+		button_up:SetHidden(true)
+	end
 	
 	-- update
 	for i = 1, n do
 		local button = GetControl("TE_FavButton"..tostring(i))
 		button:ClearAnchors();
-		isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = button:GetAnchor()
+		local isValidAnchor, point, relativeTo, relativePoint, offsetX, offsetY = button:GetAnchor()
 		button:SetAnchor(TOPLEFT, TiEmoteLabel, TOPLEFT, -40, 30+(i-1)*DEFAULT_BUTTON_HEIGHT)
 		--button:SetAnchor(point, relativeTo, relativePoint, offsetX, 30+(i-1)*DEFAULT_BUTTON_HEIGHT)
-		button:SetText(TE:GetEmoteSlashName(TE.fav[i],1))
+		button:SetText(TE:GetEmoteSlashName(TE.fav[i][2],1))
 		button:SetHidden(false)
 		button:SetHandler("OnClicked", function(self,button)
 			if (button==1) then
-				TE:PlayEmote(TE.fav[i],1)
+				TE:PlayEmote(TE.fav[i][2],1)
 			else
-				TE:ToggleFav(TE.fav[i],1)
+				TE:ToggleFav(TE.fav[i][2],1)
 			end
 		end)
+		button:SetHandler("OnMouseDoubleClick", function(self) TE:NextFavColor(TE.fav[i][1]) end)
+		color = self:GetColor(TE.fav[i][3])
+		button:SetNormalFontColor(color[1], color[2], color[3], color[4])
+		button:SetMouseOverFontColor(color[1], color[2], color[3], color[4])
+		button:SetPressedFontColor(color[1], color[2], color[3], color[4])
 	end
 end
 
 function TE:PlayEmote(emListId, list)
+	
 	local emId = 0
 	if list == 0 then
 		emId = TE:GetEmIndexFromEmListIndex(emListId)
@@ -375,9 +550,9 @@ end
 
 function TE:GetEmoteSlashName(emListId, list)
 	local emId = 0
-	if list == 0 then
+	if list == 0 then -- from emote list
 		emId = self:GetEmIndexFromEmListIndex(emListId)
-	else
+	else	-- from fav list
 		emId = emListId
 	end
 	--d("emlistid:"..tostring(emListId).." emid:"..tostring(emid).." =>"..GetEmoteSlashName(emId))
@@ -392,6 +567,7 @@ function TE:ToggleMovable()
 	TE.movable = not TE.movable
 	self:UpdateMovable()
 	TE.vars.movable = TE.movable
+	
 	return TE.movable
 end
 
@@ -449,6 +625,26 @@ function TE:NextColor(idbutton)
 	button:SetPressedFontColor(color[1], color[2], color[3], color[4])
 	
 	TE.vars.color = TE.color
+end
+
+function TE:NextFavColor(idfav)
+	
+	local button = GetControl("TE_FavButton"..tostring(idfav))
+	local idColor = TE.fav[idfav][3]
+	
+	if idColor == TE.maxColor - 1 then
+		idColor = 0
+	else
+		idColor = idColor + 1
+	end
+	TE.fav[idfav][3] = idColor
+	color = self:GetColor(idColor)
+	
+	button:SetNormalFontColor(color[1], color[2], color[3], color[4])
+	button:SetMouseOverFontColor(color[1], color[2], color[3], color[4])
+	button:SetPressedFontColor(color[1], color[2], color[3], color[4])
+	
+	TE.vars.fav = TE.fav
 end
 
 function TE:UpdateColor()

@@ -16,10 +16,12 @@
 		</OnUpdate>
 		
 	<Controls>
+	<!-- <Backdrop name="TE_EmotePanel" inherits="ZO_ThinBackdrop"> -->
 	<Control name="TE_EmotePanel" mouseEnabled="true">
-	<Dimensions x="200" y="400"/>
-	<Anchor point="TOPLEFT"/>
+	<Dimensions x="130" y="560"/>
+	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="80" offsetY="30"/>
 	</Control>
+	<!-- </Backdrop> -->
 	</Controls>
 	
 	<Controls>
@@ -32,6 +34,17 @@
 	</Button>
 	</Controls>
 	
+	<Controls>
+	<Button name="TE_SettingsButton" inherits="ZO_DefaultButton">
+	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="-40" offsetY="-3"/>
+	<Dimensions x="32" y="32"/>
+	<Textures normal="/esoui/art/chatwindow/chat_options_up.dds" pressed="/esoui/art/chatwindow/chat_options_down.dds" />
+		<OnClicked>
+		TiEmoteToggleOrderFav()
+		</OnClicked>
+	</Button>
+	</Controls>
+	
 </TopLevelControl>
 </Controls>
 
@@ -39,7 +52,7 @@
 
 <Controls>
 <Button name="TE_EmoteButton" inherits="ZO_DefaultButton" virtual="true" text="Click_">
-	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="100" offsetY="30"/>
+	<Anchor relativeTo="TE_EmotePanel" point="TOPLEFT" offsetX="0" offsetY="30"/>
 	<MouseButton button="1" enabled="true"/>
 	<MouseButton button="2" enabled="true"/> 
 </Button>
@@ -51,6 +64,22 @@
 	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="-40" offsetY="30"/>
 	<MouseButton button="1" enabled="true"/>
 	<MouseButton button="2" enabled="true"/>
+</Button>
+</Controls>
+
+<Controls>
+<Button name="TE_DownButton" inherits="ZO_DefaultButton" text="" virtual="true">
+<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="-70" offsetY="30"/>
+<Dimensions x="24" y="24"/>
+	<Textures normal="TiEmote/img/down_d.dds" pressed="TiEmote/img/down.dds"/>
+</Button>
+</Controls>
+	
+<Controls>
+<Button name="TE_UpButton" inherits="ZO_DefaultButton" text="" virtual="true">
+<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="-90" offsetY="30"/>
+<Dimensions x="24" y="24"/>
+	<Textures normal="TiEmote/img/up_d.dds" pressed="TiEmote/img/up.dds" />
 </Button>
 </Controls>
 
