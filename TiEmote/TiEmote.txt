@@ -1,5 +1,7 @@
-## Title: TiEmote
-## APIVersion: 100004
+## Title: Ti|cB70E99Emote|r
+## APIVersion: 100007
+## Version: 1.10
+## Author: Rosie
 ## SavedVariables: TiEmote_Vars
 
 TiEmote.lua
