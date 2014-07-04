@@ -30,7 +30,6 @@ TE.maxColor = table.getn(TE.fontColor)
 TE.sliderOffset = 0
 TE.alphaList = {}
 
-TE.texb = "/esoui/art/lorelibrary/lorelibrary_scroll.dds"
 TE.tex = "/esoui/art/miscellaneous/scrollbox_elevator.dds"
 TE.yOffset = 0 --30
 TE.yOffsetFav = 29

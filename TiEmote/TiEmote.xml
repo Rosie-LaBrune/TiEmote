@@ -16,12 +16,10 @@
 		</OnUpdate>
 		
 	<Controls>
-	<!-- <Backdrop name="TE_EmotePanel" inherits="ZO_ThinBackdrop"> -->
 	<Control name="TE_EmotePanel" mouseEnabled="true">
 	<Dimensions x="130" y="560"/>
 	<Anchor relativeTo="$(parent)Label" point="TOPLEFT" offsetX="80" offsetY="30"/>
 	</Control>
-	<!-- </Backdrop> -->
 	</Controls>
 	
 	<Controls>
